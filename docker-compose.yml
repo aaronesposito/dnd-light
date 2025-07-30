@@ -1,0 +1,45 @@
+services:
+  flask-app:
+    build: .
+    image: aarooon16045/dnd-app:${IMAGE_TAG}
+    ports:
+      - "5003:5003"
+    restart: on-failure
+    # debugging
+    volumes:
+      - .:/app
+    working_dir: /app
+    command:  ["flask", "run", "--host=0.0.0.0", "--port=5003", "--debug"]
+    # command: ["waitress-serve", "--host=0.0.0.0", "--port=5003", "app:app"]
+    env_file:
+      - .env
+
+  postgres:
+    image: postgres:14.5-bullseye
+    container_name: dnd-light
+    restart: on-failure
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: "dnd_db"
+    volumes:
+      - dnd-data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: dnd-admin-dev
+    restart: on-failure
+    env_file:
+      - .env
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${DB_ADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${DB_ADMIN_PASSWORD}
+    ports:
+      - "5053:80"
+
+
+volumes:
+  dnd-data:
+    name: dnd-data
