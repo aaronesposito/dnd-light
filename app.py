@@ -1,10 +1,10 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from db_build import DB_init
 from queries.races import new_race, get_all_races, get_race, delete_race, update_race
 from queries.classes import new_class, get_all_classes, get_class, delete_class, update_class
-from queries.proficiencies import new_proficiency,get_all_proficiencies, get_proficiencies_by_type, get_proficiencies_for_class
-from queries.characters import create_character, get_all_characters, get_one_character, delete_character
+from queries.proficiencies import new_proficiency, get_all_proficiencies, get_proficiencies_by_type, get_proficiencies_for_class
+from queries.characters import create_character, get_all_characters, get_one_character, delete_character, update_character
 
 
 app = Flask(__name__)
@@ -14,137 +14,178 @@ CORS(app)
 DB_init()
 
 
+# Standardized response format
+def success_response(data=None, message="Success", status_code=200):
+    """Create a standardized success response."""
+    response = {
+        "success": True,
+        "message": message
+    }
+    if data is not None:
+        response["data"] = data
+    return jsonify(response), status_code
+
+
+def error_response(message="An error occurred", status_code=400):
+    """Create a standardized error response."""
+    return jsonify({
+        "success": False,
+        "error": message
+    }), status_code
+
+
+# Character endpoints
 @app.route("/character", methods=["GET", "POST"])
 def character():
-    if request.method == "POST":
-        data = request.get_json()
-        create_character(data)
-        return {"message": "success"}, 200
-    else:
-        data = get_all_characters()
-        return data
-    
+    try:
+        if request.method == "POST":
+            data = request.get_json()
+            character_id = create_character(data)
+            return success_response(
+                data={"id": character_id},
+                message="Character created successfully",
+                status_code=201
+            )
+        else:
+            characters = get_all_characters()
+            return success_response(data=characters)
+    except Exception as e:
+        return error_response(str(e), 400)
+
+
 @app.route("/character/<int:i>", methods=["GET", "PUT", "DELETE"])
 def one_character(i):
-    match request.method:
-        case "GET":
-            data = get_one_character(i)
-            return data
-        case "PUT":
-            pass
-        case "DELETE":
-            delete_character(i)
-            return {"message":"success"}
+    try:
+        match request.method:
+            case "GET":
+                character = get_one_character(i)
+                if character:
+                    return success_response(data=character)
+                return error_response("Character not found", 404)
+            case "PUT":
+                data = request.get_json()
+                update_character(i, data)
+                return success_response(message="Character updated successfully")
+            case "DELETE":
+                delete_character(i)
+                return success_response(message="Character deleted successfully")
+    except Exception as e:
+        return error_response(str(e), 400)
 
+
+# Race endpoints
 @app.route("/race", methods=['GET', 'POST'])
 def race():
-    if request.method == "POST":
-        try:
+    try:
+        if request.method == "POST":
             data = request.get_json()
-            new_race(data)
-            return {"message": "success"}, 200
-        except:
-            return {"error": "could not create race"}, 400
-    else:
-        try:
-            data = get_all_races()
-            return {"data": data}, 200
-        except:
-            return {"error": "could not retrieve data"}, 400
-        
+            race_id = new_race(data)
+            return success_response(
+                data={"id": race_id},
+                message="Race created successfully",
+                status_code=201
+            )
+        else:
+            races = get_all_races()
+            return success_response(data=races)
+    except Exception as e:
+        return error_response(str(e), 400)
+
+
 @app.route("/race/<int:i>", methods=['GET', 'PUT', 'DELETE'])
 def one_race(i):
-    match request.method:
-        case "GET":
-            data = get_race(i)
-            return {"data": data}, 200
-        case "DELETE":
-            try:
-                delete_race(i)
-                return {"message": "success"}
-            except:
-                return {"error": "couldn't delete race"}, 400
-        case "PUT":
-            try:
+    try:
+        match request.method:
+            case "GET":
+                race = get_race(i)
+                if race:
+                    return success_response(data=race)
+                return error_response("Race not found", 404)
+            case "PUT":
                 data = request.get_json()
-                data["id"] = i
-                update_race(data)
-                return {"message": "success"}
-            except:
-                return {"error": "couldn't update race"}, 400
-            
+                update_race(i, data)
+                return success_response(message="Race updated successfully")
+            case "DELETE":
+                delete_race(i)
+                return success_response(message="Race deleted successfully")
+    except Exception as e:
+        return error_response(str(e), 400)
+
+
+# Class endpoints
 @app.route("/class", methods=['GET', 'POST'])
 def classes():
-    if request.method == "POST":
-        try:
+    try:
+        if request.method == "POST":
             data = request.get_json()
-            new_class(data)
-            return {"message": "success"}, 200
-        except:
-            return {"error": "could not create class"}, 400
-    else:
-        try:
-            data = get_all_classes()
-            return {"data": data}, 200
-        except:
-            return {"error": "could not retrieve data"}, 400
-        
+            class_id = new_class(data)
+            return success_response(
+                data={"id": class_id},
+                message="Class created successfully",
+                status_code=201
+            )
+        else:
+            classes = get_all_classes()
+            return success_response(data=classes)
+    except Exception as e:
+        return error_response(str(e), 400)
+
+
 @app.route("/class/<int:i>", methods=['GET', 'PUT', 'DELETE'])
 def one_class(i):
-    match request.method:
-        case "GET":
-            data = get_class(i)
-            return {"data": data}, 200
-        case "DELETE":
-            try:
-                delete_class(i)
-                return {"message": "success"}
-            except:
-                return {"error": "couldn't delete class"}, 400
-        case "PUT":
-            try:
+    try:
+        match request.method:
+            case "GET":
+                class_data = get_class(i)
+                if class_data:
+                    return success_response(data=class_data)
+                return error_response("Class not found", 404)
+            case "PUT":
                 data = request.get_json()
-                data["id"] = i
-                update_class(data)
-                return {"message": "success"}
-            except:
-                return {"error": "couldn't update class"}, 400
-            
+                update_class(i, data)
+                return success_response(message="Class updated successfully")
+            case "DELETE":
+                delete_class(i)
+                return success_response(message="Class deleted successfully")
+    except Exception as e:
+        return error_response(str(e), 400)
+
+
+# Proficiency endpoints
 @app.route("/prof", methods=['GET', 'POST'])
 def proficiency():
-    if request.method == "POST":
-        try:
+    try:
+        if request.method == "POST":
             data = request.get_json()
-            #data must include a proficiency field to identify the table being updated
-            new_proficiency(data)
-            return {"message": "success"}, 200
-        except Exception as e:
-            return {"error": str(e)}, 400
-    else:
-        try:
-            data = get_all_proficiencies()
-            return {"data": data}, 200
-        except:
-            return {"error": "could not retrieve data"}, 400
-        
+            prof_id = new_proficiency(data)
+            return success_response(
+                data={"id": prof_id},
+                message="Proficiency created successfully",
+                status_code=201
+            )
+        else:
+            proficiencies = get_all_proficiencies()
+            return success_response(data=proficiencies)
+    except Exception as e:
+        return error_response(str(e), 400)
+
+
 @app.route("/prof/<prof>/<int:i>", methods=["GET"])
-#url arg is class id for class proficiencies being searched
 def proficiencies_by_class(prof, i):
     try:
-        data = get_proficiencies_for_class(i, prof)
-        return data, 200
-    except:
-        return {"error": "could not retrieve data"}, 400
-        
-@app.route("/prof/<prof>", methods=["GET"])
-#url arg is string name for type of proficiency being searched
-def proficienies_by_type(prof):
-    try:
-        data = get_proficiencies_by_type(prof)
-        return data, 200
-    except:
-        return {"error": "cound not retrieve data"}, 400
+        proficiencies = get_proficiencies_for_class(i, prof)
+        return success_response(data=proficiencies)
+    except Exception as e:
+        return error_response(str(e), 400)
 
+
+@app.route("/prof/<prof>", methods=["GET"])
+def proficiencies_by_type(prof):
+    try:
+        proficiencies = get_proficiencies_by_type(prof)
+        return success_response(data=proficiencies)
+    except Exception as e:
+        return error_response(str(e), 400)
 
 
 if __name__ == "__main__":

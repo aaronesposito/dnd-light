@@ -2,7 +2,10 @@ from db_connection import execute_query
 
 
 def new_race(data):
-    """Insert a new race into the database."""
+    """
+    Insert a new race into the database.
+    Returns the ID of the created race.
+    """
     query = """
         INSERT INTO race (
             name,
@@ -11,56 +14,82 @@ def new_race(data):
             intellect_bonus,
             racial_ability_name,
             racial_ability_text
-        ) VALUES 
-        (%(name)s,
-        %(strength_bonus)s,
-        %(agility_bonus)s,
-        %(intellect_bonus)s,
-        %(racial_ability_name)s,
-        %(racial_ability_text)s)
+        ) VALUES (
+            %(name)s,
+            %(strength_bonus)s,
+            %(agility_bonus)s,
+            %(intellect_bonus)s,
+            %(racial_ability_name)s,
+            %(racial_ability_text)s
+        )
+        RETURNING id
     """
-    execute_query(query, data)
+    result = execute_query(query, data, fetch_one=True)
+    return result[0] if result else None
 
 
-def update_race(data):
+def update_race(race_id, data):
     """Update an existing race in the database."""
-    query = """
+    # Build dynamic update query based on provided fields
+    update_fields = []
+    params = {"id": race_id}
+    
+    allowed_fields = ["name", "strength_bonus", "agility_bonus", 
+                      "intellect_bonus", "racial_ability_name", "racial_ability_text"]
+    
+    for field in allowed_fields:
+        if field in data:
+            update_fields.append(f"{field} = %({field})s")
+            params[field] = data[field]
+    
+    if not update_fields:
+        raise ValueError("No valid fields to update")
+    
+    query = f"""
         UPDATE race
-        SET 
-            name = %(name)s,
-            strength_bonus = %(strength_bonus)s,
-            agility_bonus = %(agility_bonus)s,
-            intellect_bonus = %(intellect_bonus)s,
-            racial_ability_name = %(racial_ability_name)s,
-            racial_ability_text = %(racial_ability_text)s
+        SET {', '.join(update_fields)}
         WHERE id = %(id)s
     """
-    execute_query(query, data)
+    execute_query(query, params)
 
 
 def get_all_races():
-    """Retrieve all races from the database."""
-    query = "SELECT * FROM race"
+    """
+    Retrieve all races from the database.
+    Returns a list of race objects with consistent structure.
+    """
+    query = """
+        SELECT id, name, strength_bonus, agility_bonus, intellect_bonus, 
+               racial_ability_name, racial_ability_text
+        FROM race
+        ORDER BY id
+    """
     data = execute_query(query, fetch_all=True)
-    return_data = []
+    races = []
     for row in data:
-        return_data.append(
-                {
-                "id":row[0],
-                "name":row[1],
-                "strength_bonus": row[2],
-                "agility_bonus": row[3],
-                "intellect_bonus": row[4],
-                "racial_ability_name": row[5],
-                "racial_ability_text": row[6]
-            }
-        )
-    return return_data
+        races.append({
+            "id": row[0],
+            "name": row[1],
+            "strength_bonus": row[2],
+            "agility_bonus": row[3],
+            "intellect_bonus": row[4],
+            "racial_ability_name": row[5],
+            "racial_ability_text": row[6]
+        })
+    return races
 
 
 def get_race(race_id):
-    """Retrieve a single race by ID."""
-    query = "SELECT * FROM race WHERE id = %s"
+    """
+    Retrieve a single race by ID.
+    Returns a race object or None if not found.
+    """
+    query = """
+        SELECT id, name, strength_bonus, agility_bonus, intellect_bonus,
+               racial_ability_name, racial_ability_text
+        FROM race 
+        WHERE id = %s
+    """
     data = execute_query(query, [race_id], fetch_one=True)
     
     if data:
