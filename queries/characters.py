@@ -20,6 +20,7 @@ def create_character(data):
     
     query = """
             INSERT INTO character (
+                account,
                 name,
                 race,
                 class,
@@ -27,6 +28,7 @@ def create_character(data):
                 agility,
                 intellect
             ) VALUES (
+                %(account)s,
                 %(name)s,
                 %(race)s,
                 %(class)s,
@@ -47,24 +49,16 @@ def get_all_characters():
     """
     query = """
                 SELECT  char.id,
+                        account.username,
+                        account.id,
                         char.name, 
                         race.name as race_name, 
                         class.name as class_name, 
-                        char.level, 
-                        char.hp, 
-                        char.mana, 
-                        char.strength, 
-                        char.agility, 
-                        char.intellect, 
-                        char.defense, 
-                        char.armor_id, 
-                        char.weapon_id, 
-                        char.gold,
-                        char.race as race_id,
-                        char.class as class_id
+                        char.level
                 FROM character as char
                 JOIN race on race.id = char.race
                 JOIN class on class.id = char.class
+                JOIN account on account.id = char.account
                 ORDER BY char.id
                 """
     data = execute_query(query, fetch_all=True)
@@ -72,25 +66,12 @@ def get_all_characters():
     for row in data:
         characters.append({
             "id": row[0],
-            "name": row[1],
-            "race": {
-                "id": row[14],
-                "name": row[2]
-            },
-            "class": {
-                "id": row[15],
-                "name": row[3]
-            },
-            "level": row[4],
-            "hp": row[5],
-            "mana": row[6],
-            "strength": row[7],
-            "agility": row[8],
-            "intellect": row[9],
-            "defense": row[10],
-            "armor_id": row[11],
-            "weapon_id": row[12],
-            "gold": row[13]
+            "name": row[3],
+            "user": row[1],
+            "user_id": row[2],
+            "race": row[4],
+            "class": row[5],
+            "level": row[6]
         })
     return characters
 
@@ -102,6 +83,8 @@ def get_one_character(character_id):
     """
     query = """
             SELECT  char.id,
+                    account.id,
+                    account.username,
                     char.name, 
                     race.name as race_name, 
                     class.name as class_name, 
@@ -120,6 +103,7 @@ def get_one_character(character_id):
             FROM character as char
             JOIN race on race.id = char.race
             JOIN class on class.id = char.class
+            JOIN account on account.id = char.account
             WHERE char.id = %s
             """
     character = execute_query(query, [character_id], fetch_one=True)
@@ -127,25 +111,36 @@ def get_one_character(character_id):
     if character:
         return {
             "id": character[0],
-            "name": character[1],
-            "race": {
-                "id": character[14],
-                "name": character[2]
-            },
-            "class": {
-                "id": character[15],
-                "name": character[3]
-            },
-            "level": character[4],
-            "hp": character[5],
-            "mana": character[6],
-            "strength": character[7],
-            "agility": character[8],
-            "intellect": character[9],
-            "defense": character[10],
-            "armor_id": character[11],
-            "weapon_id": character[12],
-            "gold": character[13]
+            "name": character[3],
+            "details": {
+                "account": {
+                    "id": character[1],
+                    "name": character[2]
+                },
+
+                "race": {
+                    "id": character[16],
+                    "name": character[4]
+                },
+                "class": {
+                    "id": character[17],
+                    "name": character[5]
+                },
+                "stats":{
+                    "level": character[6],
+                    "hp": character[7],
+                    "mana": character[8],
+                    "strength": character[9],
+                    "agility": character[10],
+                    "intellect": character[11],
+                    "defense": character[12],
+                },
+                    "inventory": {
+                    "armor_id": character[13],
+                    "weapon_id": character[14],
+                    "gold": character[15]
+                }
+            }
         }
     return None
 

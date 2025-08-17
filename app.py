@@ -5,13 +5,18 @@ from queries.races import new_race, get_all_races, get_race, delete_race, update
 from queries.classes import new_class, get_all_classes, get_class, delete_class, update_class
 from queries.proficiencies import new_proficiency, get_all_proficiencies, get_proficiencies_by_type, get_proficiencies_for_class
 from queries.characters import create_character, get_all_characters, get_one_character, delete_character, update_character
-
+from queries.accounts import create_user, check_duplicate_username, validate_account
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 CORS(app)
 
 
 DB_init()
+
+
+
+
 
 
 # Standardized response format
@@ -32,6 +37,39 @@ def error_response(message="An error occurred", status_code=400):
         "success": False,
         "error": message
     }), status_code
+
+
+@app.route("/signup", methods=['POST'])
+def register():
+    try:
+        data = request.get_json()
+        user_exists = check_duplicate_username(data["username"])
+
+        if user_exists:
+            return error_response(
+                message="Account already exists",
+            )
+
+        hashed_password = generate_password_hash(data["password"])
+        data["password"] = hashed_password
+        print(hashed_password)
+        user_id = create_user(data)
+
+        return success_response(
+            data={"id": user_id},
+            message="User created successfully",
+            status_code=201
+        )
+    except Exception as e:
+        return error_response(str(e), 400)
+
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.get_json()
+    response = validate_account(data["username"])
+    if not response["username"] or not check_password_hash(response["password_hash"], data["password"]):
+        return {"message": "failed"}
+    return {"message": "success"}
 
 
 # Character endpoints

@@ -36,6 +36,14 @@ TYPE_BUILD = {
 }
 
 TABLE_BUILD = [
+    """
+        CREATE TABLE IF NOT EXISTS account (
+        id SERIAL PRIMARY KEY,
+        public_id VARCHAR(50) NOT NULL UNIQUE ,
+        username VARCHAR(50) NOT NULL UNIQUE ,
+        password VARCHAR(200) NOT NULL
+        );
+    """,
     """CREATE TABLE IF NOT EXISTS race (
         id SERIAL PRIMARY KEY,
         name VARCHAR(25) NOT NULL UNIQUE,
@@ -72,19 +80,19 @@ TABLE_BUILD = [
         value INT DEFAULT 0,
         weight int DEFAULT 0,
         description TEXT,
-    
+
         weapon_type weapon_type,
         damage int DEFAULT 0,
         magic_damage int DEFAULT 0,
         weapon_required_strength INT DEFAULT 0,
         weapon_required_agility INT DEFAULT 0,
         weapon_required_intellect INT DEFAULT 0,
-    
+
         armor_type armor_type,
         defense int DEFAULT 0,
         magic_resist int DEFAULT 0,
         armor_required_strength int DEFAULT 0,
-    
+
         consumable_type consumable_type,
         health_restore int DEFAULT 0,
         mana_restore int DEFAULT 0
@@ -92,6 +100,7 @@ TABLE_BUILD = [
 
     """CREATE TABLE IF NOT EXISTS character (
         id SERIAL PRIMARY KEY,
+        account INT REFERENCES account(id),
         is_active BOOL DEFAULT FALSE,
         name VARCHAR(100) NOT NULL UNIQUE,
         race INT REFERENCES race(id),
@@ -132,7 +141,7 @@ def DB_init():
                 print(f"Error creating type {type_name}: {e}")
                 # Continue with other types even if one fails
                 conn.rollback()
-        
+
         # Create tables
         for command in TABLE_BUILD:
             try:
