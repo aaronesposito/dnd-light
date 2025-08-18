@@ -32,3 +32,7 @@ def validate_account(username):
     query = "SELECT username, password, public_id FROM account WHERE username=%s"
     result = execute_query(query, [username], fetch_one=True)
     return {"username":result[0], "password_hash": result[1]}
+
+def reset_passwords(hashed_password):
+    query = "UPDATE account SET password = %s"
+    execute_query(query, [hashed_password])

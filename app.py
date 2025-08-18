@@ -5,7 +5,7 @@ from queries.races import new_race, get_all_races, get_race, delete_race, update
 from queries.classes import new_class, get_all_classes, get_class, delete_class, update_class
 from queries.proficiencies import new_proficiency, get_all_proficiencies, get_proficiencies_by_type, get_proficiencies_for_class
 from queries.characters import create_character, get_all_characters, get_one_character, delete_character, update_character
-from queries.accounts import create_user, check_duplicate_username, validate_account
+from queries.accounts import create_user, check_duplicate_username, validate_account, reset_passwords
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -222,6 +222,16 @@ def proficiencies_by_type(prof):
     try:
         proficiencies = get_proficiencies_by_type(prof)
         return success_response(data=proficiencies)
+    except Exception as e:
+        return error_response(str(e), 400)
+    
+@app.route("/reset", methods=["PATCH"])
+def reset():
+    try:
+        data = request.get_json()
+        hashed_password = generate_password_hash(data["password"])
+        reset_passwords(hashed_password)
+        return success_response()
     except Exception as e:
         return error_response(str(e), 400)
 

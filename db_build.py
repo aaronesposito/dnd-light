@@ -33,6 +33,26 @@ TYPE_BUILD = {
         'potion',
         'food'
     );""",
+
+    "damage_type": """ CREATE TYPE damage_type AS ENUM (
+        'physical',
+        'poison',
+        'fire',
+        'frost',
+        'holy'
+    );""",
+
+    "area_type": """ CREATE TYPE area_type AS ENUM (
+        'circle',
+        'cone',
+        'direct'
+    );""",
+
+    "cooldown_type": """ CREATE TYPE cooldown_type AS ENUM (
+        'daily',
+        'encounter',
+        'instant'
+    );"""
 }
 
 TABLE_BUILD = [
@@ -122,6 +142,26 @@ TABLE_BUILD = [
         character INT REFERENCES character(id),
         item INT REFERENCES item(id),
         slot_number INT CHECK (slot_number BETWEEN 1 AND 10)
+    );""",
+
+    """CREATE TABLE IF NOT EXISTS spell (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(50) NOT NULL UNIQUE
+        class INT REFERENCES class(id),
+        range INT DEFAULT 0,
+        damage_die INT NOT NULL CHECK (damage_die IN (4, 6, 8, 10, 12, 16, 20)),
+        num_of_dice INT,
+        damage_type damage_type,
+        area_type area_type,
+        cooldown cooldown_type,
+        description TEXT
+    );""",
+
+    """CREATE TABLE IF NOT EXISTS spellbook (
+        character_id INT REFERENCES character(id),
+        spell_id INT REFERENCES spell(id),
+        on_cooldown BOOL DEFAULT FALSE,
+        PRIMARY KEY (character_id, spell_id)
     );"""
 ]
 
