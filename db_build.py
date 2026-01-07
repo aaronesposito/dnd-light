@@ -36,6 +36,14 @@ TYPE_BUILD = {
 }
 
 TABLE_BUILD = [
+    """
+        CREATE TABLE IF NOT EXISTS account (
+        id SERIAL PRIMARY KEY,
+        public_id VARCHAR(50) NOT NULL UNIQUE ,
+        username VARCHAR(50) NOT NULL UNIQUE ,
+        password VARCHAR(200) NOT NULL
+        );
+    """,
     """CREATE TABLE IF NOT EXISTS race (
         id SERIAL PRIMARY KEY,
         name VARCHAR(25) NOT NULL UNIQUE,
@@ -92,6 +100,7 @@ TABLE_BUILD = [
 
     """CREATE TABLE IF NOT EXISTS character (
         id SERIAL PRIMARY KEY,
+        account INT REFERENCES account(id),
         is_active BOOL DEFAULT FALSE,
         name VARCHAR(100) NOT NULL UNIQUE,
         race INT REFERENCES race(id),
